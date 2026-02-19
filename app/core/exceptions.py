@@ -237,6 +237,8 @@ def tratar_erro_dominio(error: Exception) -> HTTPException:
         return HTTPException(
             status.HTTP_409_CONFLICT, detail=f'Já existe registro com {chave}={valor}.'
         )
+    
+    print(f"Erro inesperado: {str(error)}")
     return HTTPException(
         status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Erro interno'
     )

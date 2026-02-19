@@ -10,7 +10,10 @@ ALTER TABLE `orcamento`
     ADD COLUMN IF NOT EXISTS `mp_payment_id`  VARCHAR(100) DEFAULT NULL AFTER `preference_id`;
 
 -- 2. Adiciona o valor PAGO ao ENUM de status_orcamento
--- (MySQL não suporta ADD IF NOT EXISTS para ENUM; o ALTER é seguro se PAGO ainda não existir)
 ALTER TABLE `orcamento`
     MODIFY COLUMN `status_orcamento`
         ENUM('AGUARDANDO_APROVACAO', 'APROVADO', 'PAGO') NOT NULL;
+
+-- 3. Torna orcamento_id opcional na tabela servico (serviço pode existir sem orçamento)
+ALTER TABLE `servico`
+    MODIFY COLUMN `orcamento_id` INT DEFAULT NULL;

@@ -146,11 +146,6 @@ class VinculoPecaOrcamentoUseCase:
 
     def valida_permissao(self, peca_model: PecaModel):
         if peca_model.orcamento_id:   # type: ignore
-            # if (
-            #     peca_model.orcamento.funcionario_id
-            #     != self.funcionario_logado.funcionario_id
-            # ):   # type: ignore
-            #     raise ApenasMecanicoResponsavel
             if (
                 peca_model.orcamento.status_orcamento != 'AGUARDANDO_APROVACAO'
             ):   # type: ignore

@@ -48,14 +48,26 @@ class PecaMapper:
             valor_peca=peca_model.valor_peca,  # type: ignore
             marca=peca_model.marca,  # type: ignore
             orcamento_id=peca_model.orcamento_id,  # type: ignore
-            tipo_peca=TipoPecaMapper.model_to_entity(peca_model.tipo_peca),  # type: ignore
+            tipo_peca=(
+                TipoPecaMapper.model_to_entity(peca_model.tipo_peca)
+                if peca_model.tipo_peca
+                else None
+            ),
         )
 
     @staticmethod
     def entity_to_output_dto(peca: Peca) -> PecaOutDTO:
         return PecaOutDTO(
             peca_id=peca.peca_id,
-            tipo_peca=TipoPecaMapper.entity_to_output_dto(peca.tipo_peca),  # type: ignore
+            tipo_peca=(
+                TipoPecaMapper.entity_to_output_dto(peca.tipo_peca)
+                if peca.tipo_peca
+                else TipoPecaOutDTO(
+                    tipo_peca_id=peca.tipo_peca_id,
+                    nome_peca="",
+                    peca_critica=False,
+                )
+            ),
             valor_peca=peca.valor_peca,
             marca=peca.marca,
             orcamento_id=peca.orcamento_id,

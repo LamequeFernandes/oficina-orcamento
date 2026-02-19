@@ -20,7 +20,7 @@ class ServicoModel(Base):
     )
     valor_servico = Column(Numeric(8, 2), nullable=False)
     orcamento_id = Column(
-        Integer, ForeignKey('orcamento.orcamento_id', ondelete="CASCADE"), nullable=False
+        Integer, ForeignKey('orcamento.orcamento_id', ondelete="CASCADE"), nullable=True
     )
 
     tipo_servico = relationship('TipoServicoModel')

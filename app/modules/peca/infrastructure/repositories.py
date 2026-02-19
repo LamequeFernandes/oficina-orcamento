@@ -30,6 +30,12 @@ class PecaRepository(PecaRepositoryInterface):
 
     def alterar(self, peca: Peca) -> Peca:
         peca_model = self.db.query(PecaModel).filter(PecaModel.peca_id == peca.peca_id).first()
+
+        peca_model.tipo_peca_id = peca.tipo_peca_id
+        peca_model.valor_peca = peca.valor_peca
+        peca_model.marca = peca.marca
+        peca_model.orcamento_id = peca.orcamento_id
+
         self.db.merge(peca_model)
         self.db.commit()
         self.db.refresh(peca_model)
@@ -40,20 +46,30 @@ class PecaRepository(PecaRepositoryInterface):
         return [PecaMapper.model_to_entity(model) for model in peca_models]
 
     def vincular_a_orcamento(self, peca_id: int, orcamento_id: int) -> Peca:
-        peca = self.buscar_por_id(peca_id)
-        if not peca:
+        peca_model = (
+            self.db.query(PecaModel)
+            .filter(PecaModel.peca_id == peca_id)
+            .first()
+        )
+        if not peca_model:
             raise NaoEncontradoError('Peça', peca_id)
-        peca.orcamento_id = orcamento_id
+        peca_model.orcamento_id = orcamento_id
         self.db.commit()
-        return peca
+        self.db.refresh(peca_model)
+        return PecaMapper.model_to_entity(peca_model)
 
     def desvincular_de_orcamento(self, peca_id: int) -> Peca:
-        peca = self.buscar_por_id(peca_id)
-        if not peca:
+        peca_model = (
+            self.db.query(PecaModel)
+            .filter(PecaModel.peca_id == peca_id)
+            .first()
+        )
+        if not peca_model:
             raise NaoEncontradoError('Peça', peca_id)
-        peca.orcamento_id = None
+        peca_model.orcamento_id = None
         self.db.commit()
-        return peca
+        self.db.refresh(peca_model)
+        return PecaMapper.model_to_entity(peca_model)
 
 
 class TipoPecaRepository(TipoPecaRepositoryInterface):

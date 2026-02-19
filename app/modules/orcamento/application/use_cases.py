@@ -32,31 +32,6 @@ class CriarOrcamentoUseCase:
         self.db = db
         self.repo = OrcamentoRepository(db)
 
-    # def validar_ordem_servico_vinculada(self, ordem_servico_id: int) -> None:
-    #     ordem_servico = (
-    #         self.db.query(OrdemServicoModel)
-    #         .filter(OrdemServicoModel.ordem_servico_id == ordem_servico_id)
-    #         .first()
-    #     )
-    #     if not ordem_servico:
-    #         raise NaoEncontradoError('Ordem de Serviço', ordem_servico_id)
-
-    #     if ordem_servico.orcamento:
-    #         raise ValueError(
-    #             'Ordem de Serviço já possui um orçamento vinculado.'
-    #         )
-
-    # def validar_funcionario_vinculado(self, funcionario_id: int) -> None:
-    #     funcionario = (
-    #         self.db.query(FuncionarioModel)
-    #         .filter(FuncionarioModel.funcionario_id == funcionario_id)
-    #         .first()
-    #     )
-    #     if not funcionario:
-    #         raise NaoEncontradoError('Funcionário', funcionario_id)
-    #     if funcionario.tipo_funcionario != 'MECANICO': # type: ignore
-    #         raise ValueError('Funcionário não é um mecânico.')
-
     def executar(
         self, dados: OrcamentoInputDTO
     ) -> OrcamentoOutputDTO:
@@ -94,20 +69,6 @@ class BuscarOrcamentoUseCase:
 class AlterarStatusOrcamentoUseCase:
     def __init__(self, db: Session):
         self.repo = OrcamentoRepository(db)
-
-    def validar_alteracao(self, orcamento: Orcamento) -> None:
-        # if not self.eh_mecanico_responsavel(orcamento):
-        #     raise ApenasMecanicoResponsavel
-        # if not self.eh_cliente_dono_ordem_servico(orcamento):
-        #     raise ValueError(
-        #         'Apenas o cliente dono da ordem de serviço pode alterar o status do orçamento.'
-        #     )
-
-        # if orcamento.status_orcamento == StatusOrcamento.APROVADO:
-        #     raise ValueError(
-        #         'Não é possível alterar o status de um orçamento que já foi aprovado.'
-        #     )
-        pass
 
     def executar(
         self, orcamento_id: int, status: StatusOrcamento

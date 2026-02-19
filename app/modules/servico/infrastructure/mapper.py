@@ -52,15 +52,25 @@ class ServicoMapper:
             tipo_servico_id=servico_model.tipo_servico_id,  # type: ignore
             valor_servico=servico_model.valor_servico,  # type: ignore
             orcamento_id=servico_model.orcamento_id,  # type: ignore
-            tipo_servico=TipoServicoMapper.model_to_entity(servico_model.tipo_servico),  # type: ignore
+            tipo_servico=(
+                TipoServicoMapper.model_to_entity(servico_model.tipo_servico)
+                if servico_model.tipo_servico
+                else None
+            ),
         )
 
     @staticmethod
     def entity_to_output_dto(servico: Servico) -> ServicoOutDTO:
         return ServicoOutDTO(
             servico_id=servico.servico_id,
-            tipo_servico=TipoServicoMapper.entity_to_output_dto(
-                servico.tipo_servico  # type: ignore
+            tipo_servico=(
+                TipoServicoMapper.entity_to_output_dto(servico.tipo_servico)
+                if servico.tipo_servico
+                else TipoServicoOutDTO(
+                    tipo_servico_id=servico.tipo_servico_id,
+                    nome_servico="",
+                    descricao=None,
+                )
             ),
             valor_servico=servico.valor_servico,
             orcamento_id=servico.orcamento_id,

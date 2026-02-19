@@ -1,15 +1,12 @@
 import pytest
 from app.core.database import SessionLocal
+from app.core.security import gerar_token_servico_interno
 from app.modules.orcamento.application.dto import OrcamentoOutputDTO
 from app.modules.orcamento.domain.entities import StatusOrcamento
-# from app.modules.ordem_servico.application.dto import OrdemServicoOutputDTO
-from app.modules.peca.application.dto import PecaInputDTO, PecaOutDTO
+from app.modules.peca.application.dto import PecaOutDTO
 from app.modules.servico.application.dto import ServicoOutDTO
-# from app.modules.usuario.application.dto import ClienteOutputDTO, FuncionarioOutputDTO
-# from app.modules.usuario.infrastructure.models import UsuarioModel, ClienteModel, FuncionarioModel
 from fastapi.testclient import TestClient
 from app.main import app
-# from app.modules.veiculo.application.dto import VeiculoInputDTO
 
 
 from app.core.database import Base, engine
@@ -26,17 +23,22 @@ db.commit()
 client = TestClient(app, raise_server_exceptions=False)
 
 
+@pytest.fixture(scope="session")
+def auth_headers():
+    """Gera headers de autenticação válidos para os testes usando token M2M interno."""
+    token = gerar_token_servico_interno(expiracao_minutos=60)
+    return {"Authorization": f"Bearer {token}"}
+
+
 @pytest.fixture
-def obter_orcamento():
+def obter_orcamento(auth_headers):
     response = client.post(
         f"/orcamento",
         json={
             "ordem_servico_id": 1,
             "status_orcamento": StatusOrcamento.AGUARDANDO_APROVACAO.value
         },
-        # headers={
-        #     "Authorization": f"Bearer {token_mecanico}"
-        # }
+        headers=auth_headers,
     )
     yield OrcamentoOutputDTO(**response.json())
 
@@ -50,9 +52,6 @@ def obter_peca():
             "valor_peca": 100.0,
             "marca": "Marca Exemplo",
         },
-        # headers={
-        #     "Authorization": f"Bearer {token_mecanico}"
-        # }
     )
     yield PecaOutDTO(**response.json())
 
@@ -67,9 +66,6 @@ def obter_servico(obter_orcamento):
             "valor_servico": 150,
             "orcamento_id": orcamento.orcamento_id
         },
-        # headers={
-        #     "Authorization": f"Bearer {token_mecanico}"
-        # }
     )
     assert response.status_code == 201
     yield ServicoOutDTO(**response.json())

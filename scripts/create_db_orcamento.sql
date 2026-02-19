@@ -74,7 +74,7 @@ CREATE TABLE `servico` (
   `servico_id` int NOT NULL AUTO_INCREMENT,
   `tipo_servico_id` int NOT NULL,
   `valor_servico` decimal(8,2) NOT NULL,
-  `orcamento_id` int NOT NULL,
+  `orcamento_id` int DEFAULT NULL,
   PRIMARY KEY (`servico_id`),
   KEY `tipo_servico_id` (`tipo_servico_id`),
   KEY `orcamento_id` (`orcamento_id`),
