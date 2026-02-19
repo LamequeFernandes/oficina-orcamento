@@ -9,42 +9,25 @@ import json
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 
-def criar_hash_senha(senha: str) -> str:
-    """Gera o hash bcrypt da senha."""
-    return pwd_context.hash(senha)
+def gerar_token_servico_interno(expiracao_minutos: int = 2) -> str:
+    """
+    Gera um JWT de curta duração para comunicação machine-to-machine (M2M)
+    entre microsserviços internos, sem vínculo com nenhum usuário.
 
-
-def verificar_senha(senha: str, hash_senha: str) -> bool:
-    """Compara a senha com seu hash."""
-    return pwd_context.verify(senha, hash_senha)
-
-
-def criar_token_jwt(usuario_id: int) -> str:
-    """Gera um token JWT válido por 24 horas."""
-    expira = datetime.utcnow() + timedelta(hours=24)   # type: ignore
-    payload = {'sub': str(usuario_id), 'exp': expira, 'iss': settings.JWT_ISSUER}   # type: ignore
-    return jwt.encode(
-        payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )   # type: ignore
-
-
-# def decodificar_token_jwt(token: str) -> int | None:
-#     """Valida o token e retorna o ID do usuário."""
-#     try:
-#         print(f"SECRET_KEY: {settings.SECRET_KEY[:10]}...")  # primeiros 10 chars
-#         print(f"ALGORITHM: {settings.ALGORITHM}")
-#         print(f"JWT_ISSUER: {settings.JWT_ISSUER}")
-#         payload = jwt.decode(
-#             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM], issuer=settings.JWT_ISSUER   # type: ignore
-#         )
-#         print(f"Payload decodificado: {payload}")
-#         return int(payload.get('sub'))   # type: ignore
-#     except JWTError as e:
-#         print(f"Erro JWT: {type(e).__name__}: {e}")
-#         return None
-#     except ValueError as e:
-#         print(f"Erro ValueError: {e}")
-#         return None
+    O token é assinado com a mesma SECRET_KEY e segue o mesmo formato
+    dos tokens de usuário, acrescentando a claim `tipo_token: servico_interno`
+    para que o microsserviço receptor possa distingui-lo se necessário.
+    """
+    agora = datetime.utcnow()
+    payload = {
+        "sub": "0",                          # ID neutro — não representa um usuário
+        "tipo_token": "servico_interno",     # claim de identificação M2M
+        "servico": "oficina-orcamento",      # identifica a origem
+        "iss": settings.JWT_ISSUER,
+        "iat": agora,
+        "exp": agora + timedelta(minutes=expiracao_minutos),
+    }
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def _decode_jwt_payload_unsafe(token: str) -> dict | None:
     """Decodifica o payload do JWT SEM validar assinatura (apenas para debug)."""

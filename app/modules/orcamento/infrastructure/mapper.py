@@ -17,6 +17,9 @@ class OrcamentoMapper:
             ordem_servico_id=orcamento.ordem_servico_id,
             dta_criacao=orcamento.dta_criacao,
             dta_cancelamento=orcamento.dta_cancelamento,
+            url_pagamento=orcamento.url_pagamento,
+            preference_id=orcamento.preference_id,
+            mp_payment_id=orcamento.mp_payment_id,
         )
 
     @staticmethod
@@ -28,6 +31,8 @@ class OrcamentoMapper:
             ordem_servico_id=orcamento_model.ordem_servico_id,  # type: ignore
             dta_criacao=orcamento_model.dta_criacao,  # type: ignore
             dta_cancelamento=orcamento_model.dta_cancelamento,  # type: ignore
+            preference_id=orcamento_model.preference_id,  # type: ignore
+            mp_payment_id=orcamento_model.mp_payment_id,  # type: ignore
             # funcionario=Funcionario(
             #     funcionario_id=orcamento_model.funcionario.funcionario_id,  # type: ignore
             #     usuario=orcamento_model.funcionario.usuario,  # type: ignore
@@ -43,13 +48,14 @@ class OrcamentoMapper:
                 PecaMapper.model_to_entity(peca_model)
                 for peca_model in orcamento_model.pecas
             ],
+            url_pagamento=orcamento_model.url_pagamento  # type: ignore
         )
 
     @staticmethod
     def entity_to_output_dto(orcamento: Orcamento) -> OrcamentoOutputDTO:
         return OrcamentoOutputDTO(
             orcamento_id=orcamento.orcamento_id,  # type: ignore
-            # status_orcamento=orcamento.status_orcamento,
+            status_orcamento=orcamento.status_orcamento,
             valor_total_orcamento=orcamento.valor_total_orcamento,  # type: ignore
             # funcionario_id=orcamento.funcionario_id,
             dta_criacao=orcamento.dta_criacao,
@@ -63,4 +69,7 @@ class OrcamentoMapper:
                 for peca in orcamento.pecas
             ],
             dta_cancelamento=orcamento.dta_cancelamento,
+            url_pagamento=orcamento.url_pagamento,
+            preference_id=orcamento.preference_id,
+            mp_payment_id=orcamento.mp_payment_id,
         )

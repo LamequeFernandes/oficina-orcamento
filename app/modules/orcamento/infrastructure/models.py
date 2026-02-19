@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, DateTime, Enum, ForeignKey
+from sqlalchemy import Column, Integer, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.core.database import Base
@@ -9,12 +9,15 @@ class OrcamentoModel(Base):
 
     orcamento_id = Column(Integer, primary_key=True, autoincrement=True)
     status_orcamento = Column(
-        Enum('AGUARDANDO_APROVACAO', 'APROVADO', name='status_orcamento'),
+        Enum('AGUARDANDO_APROVACAO', 'APROVADO', 'PAGO', name='status_orcamento'),
         nullable=False,
     )
     ordem_servico_id = Column((Integer), nullable=True)
     dta_criacao = Column(DateTime, default=datetime.now)
     dta_cancelamento = Column(DateTime, nullable=True)
+    url_pagamento = Column(String(255), nullable=True)
+    preference_id = Column(String(255), nullable=True)
+    mp_payment_id = Column(String(100), nullable=True)
     # funcionario_id = Column(
     #     Integer, ForeignKey('funcionario.funcionario_id', ondelete="CASCADE"), nullable=False
     # )

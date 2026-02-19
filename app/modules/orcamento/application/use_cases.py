@@ -6,7 +6,7 @@ from app.core.exceptions import (
     NaoEncontradoError,
     ValorDuplicadoError,
 )
-from app.core.utils import obter_valor_e_key_duplicado_integrity_error
+from app.core.utils import notificar_ordem_servico_paga, obter_valor_e_key_duplicado_integrity_error
 # from app.modules.usuario.infrastructure.models import ClienteModel, FuncionarioModel
 # from app.modules.ordem_servico.infrastructure.models import OrdemServicoModel
 
@@ -19,6 +19,11 @@ from app.modules.orcamento.infrastructure.mapper import OrcamentoMapper
 from app.modules.orcamento.domain.entities import Orcamento, StatusOrcamento
 from app.modules.orcamento.infrastructure.repositories import (
     OrcamentoRepository,
+)
+from app.core.utils import (
+    gerar_checkout_preference_mercado_pago,
+    verificar_pagamento_mercado_pago,
+    notificar_ordem_servico_paga,
 )
 
 
@@ -89,29 +94,20 @@ class BuscarOrcamentoUseCase:
 class AlterarStatusOrcamentoUseCase:
     def __init__(self, db: Session):
         self.repo = OrcamentoRepository(db)
-        # self.mecanico_logado = mecanico_logado
 
-    # def eh_mecanico_responsavel(self, orcamento: Orcamento) -> bool:
-    #     return orcamento.funcionario_id == self.mecanico_logado.funcionario_id
+    def validar_alteracao(self, orcamento: Orcamento) -> None:
+        # if not self.eh_mecanico_responsavel(orcamento):
+        #     raise ApenasMecanicoResponsavel
+        # if not self.eh_cliente_dono_ordem_servico(orcamento):
+        #     raise ValueError(
+        #         'Apenas o cliente dono da ordem de serviço pode alterar o status do orçamento.'
+        #     )
 
-    # def eh_cliente_dono_ordem_servico(self, orcamento: Orcamento) -> bool:
-    #     for veiculo in self.cliente_logado.veiculos:
-    #         for ordem in veiculo.ordens_servico:
-    #             if ordem.ordem_servico_id == orcamento.ordem_servico_id:
-    #                 return True
-    #     return False
-
-    # def validar_alteracao(self, orcamento: Orcamento) -> None:
-    #     # if not self.eh_mecanico_responsavel(orcamento):
-    #     #     raise ApenasMecanicoResponsavel
-    #     if not self.eh_cliente_dono_ordem_servico(orcamento):
-    #         raise ValueError(
-    #             'Apenas o cliente dono da ordem de serviço pode alterar o status do orçamento.'
-    #         )
-    #     if orcamento.status_orcamento == StatusOrcamento.APROVADO:
-    #         raise ValueError(
-    #             'Não é possível alterar o status de um orçamento que já foi aprovado.'
-    #         )
+        # if orcamento.status_orcamento == StatusOrcamento.APROVADO:
+        #     raise ValueError(
+        #         'Não é possível alterar o status de um orçamento que já foi aprovado.'
+        #     )
+        pass
 
     def executar(
         self, orcamento_id: int, status: StatusOrcamento
@@ -122,8 +118,90 @@ class AlterarStatusOrcamentoUseCase:
         # self.validar_alteracao(orcamento)
 
         orcamento.status_orcamento = status
+
+        if status == StatusOrcamento.APROVADO:
+            listar_servicos = orcamento.servicos
+            listar_pecas = orcamento.pecas
+
+            response_date_mp = gerar_checkout_preference_mercado_pago(
+                orcamento_id, listar_servicos, listar_pecas
+            )
+            self.repo.atualizar_dados_pagamento(
+                orcamento_id,
+                url_pagamento=response_date_mp.get("init_point"),
+                preference_id=response_date_mp.get("preference_id"),
+            )
+
         orcamento_atualizado = self.repo.alterar_status(orcamento_id, status)
         return OrcamentoMapper.entity_to_output_dto(orcamento_atualizado)
+
+
+class ProcessarWebhookMercadoPagoUseCase:
+    """Processa notificações IPN/Webhooks enviadas pelo Mercado Pago."""
+
+    def __init__(self, db: Session):
+        self.repo = OrcamentoRepository(db)
+
+    def executar(self, payment_id: str) -> OrcamentoOutputDTO | None:
+        """Consulta o pagamento na API do MP e, se aprovado, marca o orçamento como PAGO."""
+        dados_pagamento = verificar_pagamento_mercado_pago(payment_id)
+
+        mp_status: str = dados_pagamento.get("status", "")
+        external_reference: str | None = dados_pagamento.get("external_reference")
+
+        if not external_reference:
+            return None
+
+        orcamento_id = int(external_reference)
+        orcamento = self.repo.buscar_por_id(orcamento_id)
+        if not orcamento:
+            return None
+
+        # Só atualiza se o pagamento foi aprovado e o orçamento ainda não está pago
+        if mp_status == "approved" and orcamento.status_orcamento != StatusOrcamento.PAGO:
+            orcamento_atualizado = self.repo.marcar_como_pago(orcamento_id, payment_id)
+
+            # realizar chamada para o microsserviço de ordem de serviço, para alterar o status da ordem de serviço vinculada
+            if orcamento_atualizado.ordem_servico_id:
+                notificar_ordem_servico_paga(orcamento_atualizado.ordem_servico_id)                  
+            return OrcamentoMapper.entity_to_output_dto(orcamento_atualizado)
+        return OrcamentoMapper.entity_to_output_dto(orcamento)
+
+
+class ConsultarStatusPagamentoUseCase:
+    """Consulta o status de pagamento de um orçamento diretamente na API do Mercado Pago."""
+
+    def __init__(self, db: Session):
+        self.repo = OrcamentoRepository(db)
+
+    def executar(self, orcamento_id: int) -> dict:
+        orcamento = self.repo.buscar_por_id(orcamento_id)
+        if not orcamento:
+            raise NaoEncontradoError('Orçamento', orcamento_id)
+
+        # Se já temos o payment_id armazenado, consultamos diretamente
+        if orcamento.mp_payment_id:
+            dados = verificar_pagamento_mercado_pago(orcamento.mp_payment_id)
+            return {
+                "orcamento_id": orcamento_id,
+                "status_orcamento": orcamento.status_orcamento,
+                "mp_payment_id": orcamento.mp_payment_id,
+                "mp_status": dados.get("status"),
+                "mp_status_detail": dados.get("status_detail"),
+                "mp_payment_method": dados.get("payment_method_id"),
+                "mp_payer_email": dados.get("payer", {}).get("email"),
+                "valor_pago": dados.get("transaction_amount"),
+            }
+
+        # Caso ainda não tenhamos o payment_id, retornamos o status atual
+        return {
+            "orcamento_id": orcamento_id,
+            "status_orcamento": orcamento.status_orcamento,
+            "mp_payment_id": None,
+            "mp_status": None,
+            "mensagem": "Pagamento ainda não foi processado ou webhook não recebido.",
+            "url_pagamento": orcamento.url_pagamento,
+        }
 
 
 class RemoverOrcamentoUseCase:

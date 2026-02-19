@@ -22,7 +22,7 @@ class OrcamentoAlteraStatusDTO(BaseModel):
 
 class OrcamentoOutputDTO(BaseModel):
     orcamento_id: int
-    # status_orcamento: StatusOrcamento
+    status_orcamento: StatusOrcamento
     valor_total_orcamento: float
     # funcionario_id: int
     dta_criacao: datetime
@@ -30,3 +30,6 @@ class OrcamentoOutputDTO(BaseModel):
     servicos_inclusos: list[ServicoOutDTO] = []
     pecas_necessarias: list[PecaOutDTO] = []
     dta_cancelamento: datetime | None = None
+    url_pagamento: str | None = None
+    preference_id: str | None = None
+    mp_payment_id: str | None = None

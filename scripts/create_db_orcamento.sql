@@ -41,11 +41,13 @@ CREATE TABLE `tipo_servico` (
 -- oficina_orcamento.orcamento definição
 CREATE TABLE `orcamento` (
   `orcamento_id` int NOT NULL AUTO_INCREMENT,
-  `status_orcamento` enum('AGUARDANDO_APROVACAO','APROVADO') NOT NULL,
-  -- TODO
-  `ordem_servico_id` int NOT NULL,
+  `status_orcamento` enum('AGUARDANDO_APROVACAO','APROVADO','PAGO') NOT NULL,
+  `ordem_servico_id` int DEFAULT NULL,
   `dta_criacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `dta_cancelamento` datetime DEFAULT NULL,
+  `url_pagamento` varchar(255) DEFAULT NULL,
+  `preference_id` varchar(255) DEFAULT NULL,
+  `mp_payment_id` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`orcamento_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

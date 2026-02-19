@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     PASSWORD_TEST_USER: str | None = None
     JWT_ISSUER: str
     JWT_AUDIENCE: str
+    URL_API_OS: str
+    MP_ACCESS_TOKEN: str
+    MP_API: str
+    MP_SUCCESS_URL: str
+    MP_FAILURE_URL: str
+    MP_PENDING_URL: str
+    MP_NOTIFICATION_URL: str
 
 
 settings = Settings()  # type: ignore

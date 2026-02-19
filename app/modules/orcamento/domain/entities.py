@@ -10,6 +10,7 @@ from app.modules.servico.domain.entities import Servico
 class StatusOrcamento(StrEnum):
     AGUARDANDO_APROVACAO = 'AGUARDANDO_APROVACAO'
     APROVADO = 'APROVADO'
+    PAGO = 'PAGO'
 
 
 @dataclass
@@ -22,6 +23,9 @@ class Orcamento:
     valor_total_orcamento: float | None = None
     dta_criacao: datetime = datetime.now()
     dta_cancelamento: datetime | None = None
+    url_pagamento: str | None = None
+    preference_id: str | None = None
+    mp_payment_id: str | None = None
 
     servicos: list[Servico] = field(default_factory=list)
     pecas: list[Peca] = field(default_factory=list)
