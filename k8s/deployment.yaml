@@ -1,21 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: oficina-api
+  name: oficina-orcamento-api
   namespace: oficina
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: oficina-api
+      app: oficina-orcamento-api
   template:
     metadata:
       labels:
-        app: oficina-api
+        app: oficina-orcamento-api
     spec:
       containers:
         - name: api
-          image: lamequesao/oficina-api:latest
+          image: lamequesao/oficina-orcamento:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           env:

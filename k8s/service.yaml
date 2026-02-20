@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: oficina-api
+  name: oficina-orcamento-api-service
   namespace: oficina
 spec:
   type: LoadBalancer
   selector:
-    app: oficina-api
+    app: oficina-orcamento-api
   ports:
-    - port: 80
+    - port: 8000
       targetPort: 8000
